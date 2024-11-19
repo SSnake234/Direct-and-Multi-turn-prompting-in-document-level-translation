@@ -7,10 +7,10 @@ model_name = "meta-llama/Llama-3.1-8B-Instruct"
 
 # Define the translation pipeline
 pipe = pipeline(
-    "text-generation",
-    model=model_name,
-    torch_dtype=torch.bfloat16,
-    device_map = 'auto'
+    "text-generation", 
+    model=model_name, 
+    model_kwargs={"torch_dtype": torch.bfloat16}, 
+    device_map="auto"
 )
 
 def generate_response(en):
@@ -70,4 +70,4 @@ def process_folder(source_folder_path, target_folder_path, pipeline):
 
 source_folder_path = ""
 target_folder_path = ""
-process_folder(source_folder_path, target_folder_path, pipeline)
+process_folder(source_folder_path, target_folder_path, pipe)
