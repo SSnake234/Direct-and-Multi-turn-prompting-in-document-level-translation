@@ -1,21 +1,16 @@
 import os
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+from transformers import pipeline
 
 # Access token and model details
 model_name = "meta-llama/Llama-3.1-8B-Instruct"
 
-# Load the model and tokenizer
-tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForCausalLM.from_pretrained(model_name)
-
 # Define the translation pipeline
 pipe = pipeline(
     "text-generation",
-    model=model,
-    tokenizer=tokenizer,
+    model=model_name,
     torch_dtype=torch.bfloat16,
-    device = 'cpu'
+    device_map = 'auto'
 )
 
 def generate_response(en):
@@ -51,10 +46,28 @@ def generate_response(en):
     )
     return outputs[0]["generated_text"][-1]['content']
 
-prompt = """
-Alice is a high school girl.
-She is majoring in Mathematical.
-She has a younger brother named Anthony.
-"""
+# Function to process a single file
+def process_file(file_path, pipeline):
+    with open(file_path, "r", encoding="utf-8") as file:
+        content = file.readlines()
+    response = generate_response("".join(content))
+    return response
 
-print(generate_response(prompt))
+# Function to process all .txt files in a folder
+def process_folder(source_folder_path, target_folder_path, pipeline):
+    for file_name in os.listdir(source_folder_path):
+        if file_name.endswith(".txt"):
+            file_path = os.path.join(source_folder_path, file_name)
+            print(f"Processing file: {file_name}")
+            try:
+                translation = process_file(file_path, pipeline)
+                output_file = os.path.join(target_folder_path, f"translated_{file_name}")
+                with open(output_file, "w", encoding="utf-8") as out_file:
+                    out_file.write(translation)
+                print(f"Saved translation to {output_file}")
+            except Exception as e:
+                print(f"Error processing {file_name}: {e}")
+
+source_folder_path = ""
+target_folder_path = ""
+process_folder(source_folder_path, target_folder_path, pipeline)
